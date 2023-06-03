@@ -25,54 +25,50 @@ var(
 	ErrorUserDoesNotExist = "user.User does not exist"
 )
 
-type User struct {
-	Email     string `json:"email"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+type User struct{
+	Email 		string	`json:"email"`
+	FirstName	string 	`json:"firstName"`
+	LastName	string 	`json:"lastName"`
 }
 
-func FetchUser(email, tableName string, dynaClient dynamodbiface.DynamoDBAPI) (*User, error) {
-	input:=&dynamodb.GetItemInput{
-		Key :map[string]*dynamodb.AttributeValue{
+func FetchUser(email, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*User, error){
+
+	input := &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
 			"email":{
 				S: aws.String(email),
 			},
 		},
-		TableName:aws.String(tableName),
+		TableName: aws.String(tableName),
 	}
 
-	result,err:= dynaClient.GetItem(input)
-
-	if err != nil {
+	result, err := dynaClient.GetItem(input)
+	if err!= nil {
 		return nil, errors.New(ErrorFailedToFetchRecord)
 	}
 
-	item:=new(User)
-	err=dynamodbattribute.UnmarshalMap(result.Item,item)
-
+	item := new(User)
+	err = dynamodbattribute.UnmarshalMap(result.Item, item)
 	if err != nil {
 		return nil, errors.New(ErrorFailedToUnmarshalRecord)
 	}
-
-	return item,nil
+	return item, nil
 }
 
-func FetchUsers(tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*[]User,error) {
-	input:=&dynamodb.ScanInput{
-		TableName:aws.String(tableName),
+func FetchUsers(tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*[]User, error){
+	input := &dynamodb.ScanInput{
+		TableName: aws.String(tableName),
 	}
 
-	result,err := dynaClient.Scan(input)
-
-	if err != nil {
+	result, err := dynaClient.Scan(input)
+	if err!= nil {
 		return nil, errors.New(ErrorFailedToFetchRecord)
 	}
-
-	item:=new([]User)
+	item := new([]User)
 	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, item)
-
-	return item,nil
+	return item, nil
 }
+
 
 func CreateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(
 	*User,
