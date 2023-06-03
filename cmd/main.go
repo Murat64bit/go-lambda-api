@@ -31,7 +31,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-const tableName="user"
+const tableName="go-lambda-api"
 
 func handler(req events.APIGatewayProxyRequest)(*events.APIGatewayProxyResponse,error){
 	switch req.HTTPMethod{
