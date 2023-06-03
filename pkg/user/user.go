@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/Murat64bit/go-lambda-api/pkg/validators"
-
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -69,7 +68,6 @@ func FetchUsers(tableName string, dynaClient dynamodbiface.DynamoDBAPI)(*[]User,
 	return item, nil
 }
 
-
 func CreateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(
 	*User,
 	error,
@@ -111,49 +109,48 @@ func UpdateUser(req events.APIGatewayProxyRequest, tableName string, dynaClient 
 	error,
 ){
 	var u User
-	if err := json.Unmarshal([]byte(req.Body), &u); err!=nil {
-		return nil, errors.New(ErrorInvalidUserData)
+	if err := json.Unmarshal([]byte(req.Body), &u); err !=nil {
+		return nil, errors.New(ErrorInvalidEmail)
 	}
 
 	currentUser, _ := FetchUser(u.Email, tableName, dynaClient)
-	if currentUser != nil && len(currentUser.Email) != 0 {
+	if currentUser !=nil && len (currentUser.Email) == 0{
 		return nil, errors.New(ErrorUserDoesNotExist)
 	}
 
-	av,err := dynamodbattribute.MarshalMap(u)
+	av, err := dynamodbattribute.MarshalMap(u)
 	if err != nil {
 		return nil, errors.New(ErrorCouldNotMarshalItem)
 	}
 
-	input:= &dynamodb.PutItemInput{
+	input := &dynamodb.PutItemInput{
 		Item: av,
 		TableName: aws.String(tableName),
 	}
 
-	_,err=dynaClient.PutItem(input)
-	if err != nil {
+	_, err = dynaClient.PutItem(input)
+	if err!=nil {
 		return nil, errors.New(ErrorCouldNotDynamoPutItem)
 	}
-	
-	return &u,nil
+	return &u, nil
 }
 
-func DeleteUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI)(
-	*User,
-	error,
-){
-	email:=req.QueryStringParameters["email"]
-	input:=&dynamodb.DeleteItemInput{
-		Key:map[string]*dynamodb.AttributeValue{
+func DeleteUser(req events.APIGatewayProxyRequest, tableName string, dynaClient dynamodbiface.DynamoDBAPI) error{
+
+
+	email := req.QueryStringParameters["email"]
+	input := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
 			"email":{
-				S:aws.String(email),
+				S: aws.String(email),
 			},
 		},
 		TableName: aws.String(tableName),
 	}
-	_,err := dynaClient.DeleteItem(input)
+	_, err := dynaClient.DeleteItem(input)
 	if err != nil {
-		return nil, errors.New(ErrorCouldNotDynamoPutItem)
+		return errors.New(ErrorCouldNotDeleteItem)
 	}
-	return nil, err
+
+	return nil
 }
